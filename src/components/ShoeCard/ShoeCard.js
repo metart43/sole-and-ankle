@@ -5,6 +5,17 @@ import { COLORS, WEIGHTS } from '../../constants';
 import { formatPrice, pluralize, isNewShoe } from '../../utils';
 import Spacer from '../Spacer';
 
+const STYLES = {
+  "on-sale": {
+    backgroundColor: COLORS.primary,
+    label: "Sale"
+  },
+  "new-release": {
+    backgroundColor: COLORS.secondary,
+    label: "Just Released!"
+  }
+}
+
 const ShoeCard = ({
   slug,
   name,
@@ -14,52 +25,67 @@ const ShoeCard = ({
   releaseDate,
   numOfColors,
 }) => {
-  // There are 3 variants possible, based on the props:
-  //   - new-release
-  //   - on-sale
-  //   - default
-  //
-  // Any shoe released in the last month will be considered
-  // `new-release`. Any shoe with a `salePrice` will be
-  // on-sale. In theory, it is possible for a shoe to be
-  // both on-sale and new-release, but in this case, `on-sale`
-  // will triumph and be the variant used.
-  // prettier-ignore
   const variant = typeof salePrice === 'number'
     ? 'on-sale'
     : isNewShoe(releaseDate)
       ? 'new-release'
       : 'default'
+      
+  const styles = STYLES[variant];
+  const onSale = typeof salePrice === 'number';
 
   return (
     <Link href={`/shoe/${slug}`}>
       <Wrapper>
+        {styles ?
+          <ShoeTag style={{ "--backgroundColor": styles.backgroundColor }}>{styles.label}</ShoeTag>
+          : null}
         <ImageWrapper>
           <Image alt="" src={imageSrc} />
         </ImageWrapper>
         <Spacer size={12} />
         <Row>
           <Name>{name}</Name>
-          <Price>{formatPrice(price)}</Price>
+          <Price style={{
+            "--textDecoration":  onSale ? "line-through" : "none",
+            "--textColor": onSale ? COLORS.gray[700] : COLORS.black
+          }}>{formatPrice(price)}</Price>
         </Row>
         <Row>
           <ColorInfo>{pluralize('Color', numOfColors)}</ColorInfo>
+          <SalePrice>{formatPrice(salePrice)}</SalePrice>
         </Row>
       </Wrapper>
     </Link>
   );
 };
 
+const ShoeTag = styled.span`
+  height: 32px;
+  padding: 8px;
+  color: ${COLORS.white};
+  position: absolute;
+  top: 16px;
+  right: -4px;
+  z-index: 1;
+  background-color: var(--backgroundColor);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+`;
+
+
 const Link = styled.a`
   text-decoration: none;
   color: inherit;
   display: flex;
-  flex: 1 0 300px;
+  flex: 1 0 310px;
 `;
 
 const Wrapper = styled.article`
   display: flex;
   flex-direction: column;
+  position: relative;
 `;
 
 const ImageWrapper = styled.div`
@@ -83,6 +109,8 @@ const Name = styled.h3`
 
 const Price = styled.span`
   margin-left: auto;
+  text-decoration: var(--textDecoration);
+  color: var(--textColor);
 `;
 
 const ColorInfo = styled.p`
@@ -92,6 +120,7 @@ const ColorInfo = styled.p`
 const SalePrice = styled.span`
   font-weight: ${WEIGHTS.medium};
   color: ${COLORS.primary};
+  margin-left: auto;
 `;
 
 export default ShoeCard;
